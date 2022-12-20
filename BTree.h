@@ -1,6 +1,5 @@
 #pragma once
 #include "Node.h" 
-#include <cmath>
 
 class BTree {
     public:
@@ -11,5 +10,5 @@ class BTree {
         ~BTree();
 
         void insertIndex(int idx);
-        void printTree();
+        void printTree(std::shared_ptr<Node> node);
 };

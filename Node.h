@@ -1,50 +1,68 @@
 #include <iostream>
 #include <memory>
 #include <vector>
+#include <cmath>
 
 class Node {
     public: 
-        bool isLeaf, isInternal;
+        bool isLeaf = false;
+        bool isInternal = false;
         unsigned int curCapacity;
         unsigned int maxCapacity;
-        int nodeNumber; 
+        int nodeNumber;
+        std::vector<unsigned int> indexVec;
+        
         Node();
         ~Node();
-        virtual void insertIndex() = 0; 
-        virtual void deleteIndex() = 0;
+        virtual void insertIndex(int idx) = 0; 
+        virtual void deleteIndex(int idx) = 0;
         virtual void printNode() = 0;
+        
+        void insertIndexHelper(int idx);
 };
 
-class LeafNode : public Node {
+class LeafNode : public Node, public std::enable_shared_from_this<LeafNode> {
     public:
-        //static members 
-        bool isLeaf = true;
-        bool isInternal = false;
-        std::vector<unsigned int> indexVec;
+        //static members  
         std::shared_ptr<Node> parentNode;
 
         //methods 
         LeafNode();
-        LeafNode(int nodeCount);
-        void insertIndex() override; 
-        void deleteIndex() override; 
+        LeafNode(int nodeCount); 
+        std::shared_ptr<LeafNode> getPtr() { //get shared_ptr to this
+            return shared_from_this();
+        }
+
+        void copyUp(int idx);
+        void insertIndex(int idx) override; 
+        void deleteIndex(int idx) override; 
         void printNode() override;
 };
+
+typedef struct index_with_pointer {
+    int index;
+    std::shared_ptr<Node> child; //node with indexes >= index
+} IndexPointerNode;
+
 
 class InternalNode : public Node {
     public:
         //static members
-        bool isInternal = true;
-        bool isLeaf = false;
+        std::shared_ptr<Node> parentNode;
         std::vector<std::shared_ptr<Node>> nodeVec; //size of n + 1
-        std::vector<unsigned int> indexVec;         //size of n
+        std::vector<IndexPointerNode> internalVec;
 
         //methods
         InternalNode();
         InternalNode(int nodeCount);
-        void insertIndex() override; 
-        void deleteIndex() override;
+
+        void insertNodePtr(std::shared_ptr<Node> node, int nodeVal); 
+        void pushUp(int idx);
+        void insertIndex(int idx) override; 
+        void deleteIndex(int idx) override;
         void printNode() override;
 };
+
+
 /*
 */
