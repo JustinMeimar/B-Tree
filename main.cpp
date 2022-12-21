@@ -26,14 +26,22 @@ int main() {
     // tree->printTree(tree->root);
     
     tree->insertIndex(12);
-    // tree->printTree(tree->root);
-    
+    // tree->printTree(tree->root);   
+
     tree->insertIndex(19);
     // tree->printTree(tree->root);
     
     tree->insertIndex(15);
-    tree->printTree(tree->root);
+
+    // 
+    tree->insertIndex(7);
+    // std::cout << "\n\n"; 
+    // tree->printTree(tree->root);
     /*
+    std::cout << "\n\n-------------------------\n\n" << std::endl; 
+
+    
+    tree->printTree(tree->root);
     
     */ 
     /*

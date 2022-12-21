@@ -15,7 +15,6 @@ class Node {
         Node();
         ~Node();
         virtual void insertIndex(int idx) = 0; 
-        virtual void deleteIndex(int idx) = 0;
         virtual void printNode() = 0;
         
 };
@@ -24,6 +23,7 @@ class LeafNode : public Node, public std::enable_shared_from_this<LeafNode> {
     public:
         //static members  
         std::vector<unsigned int> indexVec;
+        std::shared_ptr<LeafNode> nextNode;
 
         //methods 
         LeafNode();
@@ -35,7 +35,7 @@ class LeafNode : public Node, public std::enable_shared_from_this<LeafNode> {
         void insertIndexHelper(int idx);
         void copyUp(int idx);
         void insertIndex(int idx) override; 
-        void deleteIndex(int idx) override; 
+        void deleteIndex(int idx); 
         void printNode() override;
 };
 
@@ -48,8 +48,9 @@ typedef struct index_with_pointer {
 class InternalNode : public Node, public std::enable_shared_from_this<InternalNode> {
     public:
         //static members
-        std::vector<std::shared_ptr<Node>> nodeVec; //size of n + 1
         std::vector<std::shared_ptr<IndexPointerNode>> internalVec;
+        std::shared_ptr<Node> leftPointer;
+        bool shouldPushUp = false;
 
         //methods
         InternalNode();
@@ -58,10 +59,12 @@ class InternalNode : public Node, public std::enable_shared_from_this<InternalNo
             return shared_from_this();
         }
 
+        std::shared_ptr<IndexPointerNode> initIndexPointerNodeFromCopy(std::shared_ptr<IndexPointerNode> indexPtrNode);
         void insertIndexPointerNode(std::shared_ptr<IndexPointerNode> indexPtrNode);
+        void deleteIndexPtrNode(int idx);
         void pushUp(std::shared_ptr<IndexPointerNode> indexPtrNode);
+        
         void insertIndex(int idx) {}
-        void deleteIndex(int idx) override;
         void printNode() override;
 };
 

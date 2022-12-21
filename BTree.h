@@ -11,4 +11,5 @@ class BTree {
 
         void insertIndex(int idx);
         void printTree(std::shared_ptr<Node> node);
+        void internalPrint(std::shared_ptr<InternalNode> node);
 };

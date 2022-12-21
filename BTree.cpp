@@ -4,6 +4,8 @@ BTree::BTree() {}
 BTree::~BTree() {}
 
 void BTree::insertIndex(int idx) {
+
+    std::cout << "INSERT: " << idx << std::endl;
     if (root == NULL) {
         auto leafNode = std::make_shared<LeafNode>(LeafNode());
         root = leafNode;
@@ -27,8 +29,11 @@ void BTree::insertIndex(int idx) {
             for (auto it = internalNode->internalVec.begin(); it <= internalNode->internalVec.end(); it++) {
                 if (idx < (*it)->index) {
                     // follow ptr to the left
-                    curNode = internalNode->internalVec[i-1]->child;
-                    // curNode = (*it)->child; //previous iterator
+                    if (it == internalNode->internalVec.begin()) {
+                        curNode = internalNode->leftPointer;
+                    } else {
+                        curNode = internalNode->internalVec[i-1]->child;
+                    }
                     if (curNode->isLeaf) break;
                 } 
                 // rightmost pointer at sizeof(indexVec) + 1
@@ -52,27 +57,23 @@ void BTree::insertIndex(int idx) {
     return;
 }
 
+void BTree::internalPrint(std::shared_ptr<InternalNode> node) {
+    return;
+}
+
 void BTree::printTree(std::shared_ptr<Node> node) {
 
-    if (node->isLeaf) {
-        auto leaf = std::dynamic_pointer_cast<LeafNode>(root);
-        leaf->printNode();
+    auto leafNode = std::dynamic_pointer_cast<LeafNode>(node);
+    if (leafNode != nullptr) {
+        leafNode->printNode();
         return;
-    } else {
-        
-        // auto curNode = std::dynamic_pointer_cast<InternalNode>(node);
-
-        auto internal = std::dynamic_pointer_cast<InternalNode>(root); 
-        // std::cout << "\n"; 
-        internal->printNode();
-        // std::cout << "\n"; 
-        for (auto child : internal->internalVec) {
-            printf("\n"); 
-            if (child->child->isLeaf) {
-                auto leafNode = std::dynamic_pointer_cast<LeafNode>(child->child);
-                leafNode->printNode();
-            }
-            // printTree(child->child);
-        }
     }
+    auto curNode = std::dynamic_pointer_cast<InternalNode>(node);
+     
+    curNode->printNode();
+    printf("\n");
+    printTree(curNode->leftPointer); 
+    for (auto childNode : curNode->internalVec) {
+        printTree(childNode->child);
+    } 
 }
