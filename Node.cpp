@@ -3,7 +3,10 @@
 Node::Node() {}
 Node::~Node() {}
 
-void Node::insertIndexHelper(int idx) {
+/*
+Leaf Node Implementation
+        */
+void LeafNode::insertIndexHelper(int idx) {
     curCapacity++;
     int i = 0; 
     for(auto it=indexVec.begin() ; it < indexVec.end(); it++) {
@@ -31,26 +34,21 @@ void LeafNode::copyUp(int idx) {
     int copyVal = thisLeafNode->indexVec[copyIdx];   
 
     if (internalNode == nullptr) { 
+        //init first IndexPointerNode (Left Most Pointer) 
+        std::shared_ptr<IndexPointerNode> initNode = std::make_shared<IndexPointerNode>();
+        initNode->index = 0; 
+        initNode->child = thisLeafNode;
         //make new internal node
         internalNode = std::make_shared<InternalNode>(InternalNode()); 
+        internalNode->internalVec.insert(internalNode->internalVec.begin(), initNode);
+        internalNode->curCapacity++;
+    }    
 
-        // IndexPointerNode initNode = {
-        //     0, // 
-        //     thisLeafNode
-        // };
-
-        // internalNode->internalVec.insert(
-        //     internalNode->internalVec.begin(), 
-        //     initNode
-        // );
-
-        internalNode->insertIndex(copyVal); //index we copy up
-        internalNode->insertNodePtr(thisLeafNode, thisLeafNode->indexVec[0]);       
-    } else {
-        //internal already exists
-        internalNode->insertIndex(copyVal); //index we copy up
-    } 
-    internalNode->insertNodePtr(nextLeafNode, copyVal);
+    //Add IndexPointer node to new leaf node into internal node  
+    std::shared_ptr<IndexPointerNode> copyUpNode = std::make_shared<IndexPointerNode>();
+    copyUpNode->index = copyVal;
+    copyUpNode->child = nextLeafNode;
+    internalNode->insertIndexPointerNode(copyUpNode);   
 
     //remove leaf node values from [copyIdx:end]
     int curIdx = thisLeafNode->indexVec.size() - 1; //end of the vector
@@ -105,56 +103,104 @@ void LeafNode::printNode() {
     std::cout << curCapacity;
 }
 
+/*
+Internal Node Implementation
+    */
+
 InternalNode::InternalNode() {
     curCapacity = 0;
     maxCapacity = 3;
     isInternal = true;
 }
 
-void InternalNode::insertNodePtr(std::shared_ptr<Node> node, int nodeVal) {
-    int i = 1;
-    if (nodeVal < indexVec[0]) {
-        nodeVec.insert(nodeVec.begin(), node); 
-        return;
-    } else {
-        for (auto it = indexVec.begin(); it < indexVec.end(); it++) {
-            if (nodeVal >= *it) { 
-                // std::cout << "iterator over index vec in internal node: " << *it << std::endl;
-                break;
-            }
-            i++;
+void InternalNode::insertIndexPointerNode(std::shared_ptr<IndexPointerNode> indexPtrNode) {
+    
+    if (curCapacity > maxCapacity) {
+        int copyIdx = floor(curCapacity / 2); 
+        int copyVal = internalVec[copyIdx]->index;
+        pushUp(indexPtrNode);
+
+    } 
+
+    for (auto it = internalVec.begin(); it < internalVec.end(); it++) {
+        if (indexPtrNode->index < (*it)->index ) {
+            internalVec.insert(it, indexPtrNode);
+            curCapacity++;
+            return;
         }
-        nodeVec.insert(nodeVec.begin() + i, node);
     }
+    internalVec.push_back(indexPtrNode);
+    curCapacity++;
 }
 
-void InternalNode::pushUp(int idx) {
+void InternalNode::pushUp(std::shared_ptr<IndexPointerNode> indexPtrNode) {
+
+    auto thisNode = getPtr();
+    auto splitNode = std::make_shared<InternalNode>();
+    std::shared_ptr<InternalNode> parentInternalNode = std::dynamic_pointer_cast<InternalNode>(thisNode->parentNode);
+
+    if (parentInternalNode == nullptr) {
+        // make new parent internal node 
+        auto parentInternalNode = std::make_shared<InternalNode>();
+        auto initIndexPointerNode = std::make_shared<IndexPointerNode>();
+        initIndexPointerNode->index = 0;
+        initIndexPointerNode->child = thisNode;
+        parentInternalNode->insertIndexPointerNode(initIndexPointerNode);
+    }
+    
+    thisNode->parentNode = parentInternalNode;
+    splitNode->parentNode = parentInternalNode;
+
+    //copy values into split node
+    bool copy = false;
+    for (auto it = thisNode->internalVec.begin(); it < thisNode->internalVec.end(); it++) { 
+        if (copy) {
+            splitNode->internalVec.push_back(*it);
+            thisNode->internalVec.erase(it);
+            splitNode->curCapacity++;
+            continue;
+        }
+        if ((*it)->index == indexPtrNode->index) {
+            copy = true;  
+        }
+    }
+
+    /*
+    //consider the pushed up index should be accessible through LHS pointer of split node
+    auto pushedIndexPtrNode = std::make_shared<IndexPointerNode>();
+    pushedIndexPtrNode->index = indexPtrNode->index;
+    pushedIndexPtrNode->child = indexPtrNode->child;
+    splitNode->internalVec.insert(internalVec.begin(), pushedIndexPtrNode);
+    splitNode->curCapacity++;
+
+    //create the new indexPointerNode that will be pushed into parent
+    auto parentIndexPtrNode = std::make_shared<IndexPointerNode>();
+    parentIndexPtrNode->index = indexPtrNode->index;
+    parentIndexPtrNode->child = splitNode;
+    parentInternalNode->insertIndexPointerNode(parentIndexPtrNode); 
+    parentInternalNode->curCapacity++;
+    */ 
+
     return;
 }
-
-void InternalNode::insertIndex(int idx) {
-    if (curCapacity == maxCapacity) {
-        pushUp(idx);
-    } else {
-        insertIndexHelper(idx);
-    }
-    return; 
-} 
 
 void InternalNode::deleteIndex(int idx) {}
 
 void InternalNode::printNode() {
     int i = 0;
     std::cout << "[ "; 
-    for (auto index : indexVec) {
-        auto node = nodeVec[i+1]; 
-        std::cout << index << "";
-        if (i != indexVec.size() - 1) {
+    for (auto child : internalVec) {
+        if (child->index == 0) {
+            continue;
+        }
+        std::cout << child->index;
+        if (i != internalVec.size() -2) {
             std::cout << ", ";
         } 
         i++;
     }
-    std::cout << " ]";  
+    std::cout << " ]"; 
+    std::cout << curCapacity; 
 }
 /*
 */

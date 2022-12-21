@@ -18,9 +18,8 @@ int main() {
  
     tree->insertIndex(25);
     // tree->printTree(tree->root);
-    /*
      
-    tree->insertIndex(17); 
+    tree->insertIndex(6); 
     // tree->printTree(tree->root);
     
     tree->insertIndex(10);
@@ -34,6 +33,7 @@ int main() {
     
     tree->insertIndex(15);
     tree->printTree(tree->root);
+    /*
     
     */ 
     /*

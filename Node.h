@@ -10,7 +10,7 @@ class Node {
         unsigned int curCapacity;
         unsigned int maxCapacity;
         int nodeNumber;
-        std::vector<unsigned int> indexVec;
+        std::shared_ptr<Node> parentNode;
         
         Node();
         ~Node();
@@ -18,13 +18,12 @@ class Node {
         virtual void deleteIndex(int idx) = 0;
         virtual void printNode() = 0;
         
-        void insertIndexHelper(int idx);
 };
 
 class LeafNode : public Node, public std::enable_shared_from_this<LeafNode> {
     public:
         //static members  
-        std::shared_ptr<Node> parentNode;
+        std::vector<unsigned int> indexVec;
 
         //methods 
         LeafNode();
@@ -33,6 +32,7 @@ class LeafNode : public Node, public std::enable_shared_from_this<LeafNode> {
             return shared_from_this();
         }
 
+        void insertIndexHelper(int idx);
         void copyUp(int idx);
         void insertIndex(int idx) override; 
         void deleteIndex(int idx) override; 
@@ -45,20 +45,22 @@ typedef struct index_with_pointer {
 } IndexPointerNode;
 
 
-class InternalNode : public Node {
+class InternalNode : public Node, public std::enable_shared_from_this<InternalNode> {
     public:
         //static members
-        std::shared_ptr<Node> parentNode;
         std::vector<std::shared_ptr<Node>> nodeVec; //size of n + 1
-        std::vector<IndexPointerNode> internalVec;
+        std::vector<std::shared_ptr<IndexPointerNode>> internalVec;
 
         //methods
         InternalNode();
         InternalNode(int nodeCount);
+        std::shared_ptr<InternalNode> getPtr() { //get shared_ptr to this
+            return shared_from_this();
+        }
 
-        void insertNodePtr(std::shared_ptr<Node> node, int nodeVal); 
-        void pushUp(int idx);
-        void insertIndex(int idx) override; 
+        void insertIndexPointerNode(std::shared_ptr<IndexPointerNode> indexPtrNode);
+        void pushUp(std::shared_ptr<IndexPointerNode> indexPtrNode);
+        void insertIndex(int idx) {}
         void deleteIndex(int idx) override;
         void printNode() override;
 };
