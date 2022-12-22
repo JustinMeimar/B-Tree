@@ -5,7 +5,6 @@ BTree::~BTree() {}
 
 void BTree::insertIndex(int idx) {
 
-    std::cout << "INSERT: " << idx << std::endl;
     if (root == NULL) {
         auto leafNode = std::make_shared<LeafNode>(LeafNode());
         root = leafNode;
@@ -21,30 +20,11 @@ void BTree::insertIndex(int idx) {
         }
     } else { 
         // find the leaf node we should insert idx into  
-        auto internalNode = std::dynamic_pointer_cast<InternalNode>(root);
-        std::shared_ptr<Node> curNode = internalNode;
-        
-        while (curNode->isInternal) {
-            int i = 0; 
-            for (auto it = internalNode->internalVec.begin(); it <= internalNode->internalVec.end(); it++) {
-                if (idx < (*it)->index) {
-                    // follow ptr to the left
-                    if (it == internalNode->internalVec.begin()) {
-                        curNode = internalNode->leftPointer;
-                    } else {
-                        curNode = internalNode->internalVec[i-1]->child;
-                    }
-                    if (curNode->isLeaf) break;
-                } 
-                // rightmost pointer at sizeof(indexVec) + 1
-                else if (it == internalNode->internalVec.end()) {
-                    curNode = (*it)->child;
-                } 
-                i++;
-            }
-        }
+        auto internalNode = std::dynamic_pointer_cast<InternalNode>(root); 
+        findLeafNode(idx, internalNode);
+
         // leaf node to insert into is found
-        auto leafNode = std::dynamic_pointer_cast<LeafNode>(curNode);
+        auto leafNode = std::dynamic_pointer_cast<LeafNode>(this->leafTemp);
         leafNode->insertIndex(idx);
 
         //assign root
@@ -58,6 +38,53 @@ void BTree::insertIndex(int idx) {
 }
 
 void BTree::internalPrint(std::shared_ptr<InternalNode> node) {
+    return;
+}
+
+void BTree::findLeafNode(int idx, std::shared_ptr<Node> node) {
+    if (node->isLeaf) {
+        this->leafTemp = node;
+        return;
+    } else {
+        auto internalNode = std::dynamic_pointer_cast<InternalNode>(node); 
+        int vecSize = internalNode->internalVec.size(); 
+        //recursively search the internal nodes        
+        if (idx < internalNode->internalVec[0]->index)  {
+            //index less than all index in internal
+            findLeafNode(idx, internalNode->leftPointer);
+ 
+        } else if(idx > internalNode->internalVec[vecSize-1]->index) {
+            //index greater than all indexes in internal
+            findLeafNode(idx, internalNode->internalVec[vecSize-1]->child);
+       
+        } else {
+            //index somewhere in the middle of the B+ Tree 
+            for (int i = 1; i < vecSize; i++) {
+                if (idx < internalNode->internalVec[i]->index) {
+                    //search the child of the previous index entry
+                   findLeafNode(idx, internalNode->internalVec[i-1]->child);
+                }
+            }
+        }
+    }
+}
+
+void BTree::searchIndex(int idx, std::shared_ptr<Node> node) {
+    if (node == nullptr) { node == root; } // override default arg
+
+    findLeafNode(idx, node);
+    auto leafNode = std::dynamic_pointer_cast<LeafNode>(this->leafTemp);
+    // auto leafNode = std::dynamic_pointer_cast<LeafNode>(node);
+
+    for (auto leafIndex : leafNode->indexVec) {
+        if (leafIndex == idx) {
+            printf("\n --- Found index %d in leaf node: ", idx);
+            leafNode->printNode(); 
+            return;
+        }
+    }
+    printf("\n --- Index: %d is not in the B+ Tree", idx);
+    
     return;
 }
 

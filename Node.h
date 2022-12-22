@@ -15,8 +15,7 @@ class Node {
         Node();
         ~Node();
         virtual void insertIndex(int idx) = 0; 
-        virtual void printNode() = 0;
-        
+        virtual void printNode() = 0; 
 };
 
 class LeafNode : public Node, public std::enable_shared_from_this<LeafNode> {
@@ -67,7 +66,3 @@ class InternalNode : public Node, public std::enable_shared_from_this<InternalNo
         void insertIndex(int idx) {}
         void printNode() override;
 };
-
-
-/*
-*/
