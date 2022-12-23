@@ -1,7 +1,17 @@
 #include "BTree.h"
+#define DEBUG_PRINT false
 
 BTree::BTree() {}
 BTree::~BTree() {}
+
+void BTree::assignRoot() {
+    //assign root by walking up the tree
+    std::shared_ptr<Node> highestNode = root;
+    while (highestNode->parentNode != nullptr) {
+        highestNode = highestNode->parentNode;
+    }
+    root = highestNode;
+}
 
 void BTree::insertIndex(int idx) {
 
@@ -9,36 +19,22 @@ void BTree::insertIndex(int idx) {
         auto leafNode = std::make_shared<LeafNode>(LeafNode());
         root = leafNode;
         root->insertIndex(idx); 
-    } 
-    else if (root->isLeaf) {
-        // check if the node is already full
-        auto leafNode = std::dynamic_pointer_cast<LeafNode>(root);
-        leafNode->insertIndex(idx);
-        if (leafNode->parentNode != nullptr) {
-            //make root the parent
-            root = leafNode->parentNode;
-        }
-    } else { 
-        // find the leaf node we should insert idx into  
-        auto internalNode = std::dynamic_pointer_cast<InternalNode>(root); 
-        findLeafNode(idx, internalNode);
-
+        height = 1;
+    } else {  
         // leaf node to insert into is found
+        findLeafNode(idx, root);
         auto leafNode = std::dynamic_pointer_cast<LeafNode>(this->leafTemp);
-        leafNode->insertIndex(idx);
 
-        //assign root
-        std::shared_ptr<Node> highestNode = leafNode;
-        while (highestNode->parentNode != nullptr) {
-            highestNode = highestNode->parentNode;
-        }
-        root = highestNode;
+        if (leafNode->curCapacity == leafNode->maxCapacity)  {
+            leafNode->copyUp(idx);
+            assignRoot(); 
+            insertIndex(idx);
+            return;
+        } else {
+            leafNode->insertIndex(idx); 
+            assignRoot();
+        } 
     }
-    return;
-}
-
-void BTree::internalPrint(std::shared_ptr<InternalNode> node) {
-    return;
 }
 
 void BTree::findLeafNode(int idx, std::shared_ptr<Node> node) {
@@ -74,7 +70,6 @@ void BTree::searchIndex(int idx, std::shared_ptr<Node> node) {
 
     findLeafNode(idx, node);
     auto leafNode = std::dynamic_pointer_cast<LeafNode>(this->leafTemp);
-    // auto leafNode = std::dynamic_pointer_cast<LeafNode>(node);
 
     for (auto leafIndex : leafNode->indexVec) {
         if (leafIndex == idx) {
@@ -88,19 +83,55 @@ void BTree::searchIndex(int idx, std::shared_ptr<Node> node) {
     return;
 }
 
-void BTree::printTree(std::shared_ptr<Node> node) {
-
+void BTree::printTreeHelper(std::shared_ptr<Node> node, int height) {
     auto leafNode = std::dynamic_pointer_cast<LeafNode>(node);
     if (leafNode != nullptr) {
-        leafNode->printNode();
+        if (leafNode->heightInTree == height) {
+            leafNode->printNode();
+        }
         return;
     }
+    
     auto curNode = std::dynamic_pointer_cast<InternalNode>(node);
-     
-    curNode->printNode();
-    printf("\n");
-    printTree(curNode->leftPointer); 
+    if(curNode->heightInTree == height) {
+        curNode->printNode();
+    }
+    printTreeHelper(curNode->leftPointer, height); 
     for (auto childNode : curNode->internalVec) {
-        printTree(childNode->child);
-    } 
+        printTreeHelper(childNode->child, height);
+    }
+}
+
+void BTree::printTree(std::shared_ptr<Node> node) {
+
+    #if DEBUG_PRINT
+        //h = 1
+        auto internal = std::dynamic_pointer_cast<InternalNode>(node);
+        internal->printNode(); 
+        printf("\n");
+
+        // h = 2 
+        internal->leftPointer->printNode();
+        for (int i = 0; i < internal->internalVec.size(); i++) {
+            internal->internalVec[i]->child->printNode();
+        }
+
+        // h = 3
+        for (int i = 0; i < internal->internalVec.size(); i++) {
+            auto internalChild = std::dynamic_pointer_cast<InternalNode>(internal->internalVec[i]->child);
+            internalChild->leftPointer->printNode();
+            for (int j = 0; j < internalChild->internalVec.size(); j++) {
+                internalChild->internalVec[j]->child->printNode();
+            }
+        }
+    #endif 
+
+    #if !DEBUG_PRINT 
+    //print from top to bottom, each height on own line   
+    for (int i = 5; i > 0; i--) {
+        printTreeHelper(node, i);
+        printf("\n");
+    }
+     
+    #endif 
 }

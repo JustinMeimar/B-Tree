@@ -10,6 +10,7 @@ class Node {
         unsigned int curCapacity;
         unsigned int maxCapacity;
         int nodeNumber;
+        int heightInTree;
         std::shared_ptr<Node> parentNode;
         
         Node();

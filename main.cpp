@@ -1,24 +1,73 @@
 #include "BTree.h"
 
-int main() {
+#define GEN_RAND false
+#define NUM_INSERTS 10
+
+int main(int argc, char** argv) {
 
     std::shared_ptr<BTree> tree = std::make_shared<BTree>(BTree());
     tree->root = NULL;   
     tree->nodeCount++;
-
-	srand((unsigned) time(NULL));
-
-	// Get a random number
     
-    for (int i = 0; i < 8; i++) {\
-        int random = (rand() % 36);
-        printf("\n--------- INSERT %d -----------\n", random);
-        tree->insertIndex(random); 
-        tree->printTree(tree->root); 
-        printf("\n\n"); 
-        // std::cout << random<< std::endl;
+	
+    srand((unsigned) time(NULL));
+    int* inserts = (int*)malloc(sizeof(int) * NUM_INSERTS);
+    
+    #if GEN_RAND
+    printf("Gen random inserts");  
+    for (int i = 0; i < NUM_INSERTS; i++) {
+        //gen random index 
+        int random = (rand() % 99) + 1;
+        
+        //scan for duplicate 
+        bool duplicate = false; 
+        for (int j = 0; j < NUM_INSERTS; j++) {
+            if (*(inserts + j) == random) {
+                duplicate = true;
+            }
+        }
+        if (duplicate) {
+            i--;
+            continue;
+        }
+        *(inserts + i) = random;
+    }
+    
+    #endif 
+
+    #if !GEN_RAND 
+    int explicit_inserts[NUM_INSERTS] = {
+        1,2,3,4,5,6,7,8,9,10
+    };
+    int explicit_inserts2[NUM_INSERTS] = {
+        32, 84, 74, 44, 46, 25, 66, 11, 51, 82
+    };
+    for (int i = 0; i < NUM_INSERTS; i++) {
+        inserts[i] = explicit_inserts[i];
+    }
+    #endif
+
+    for (int i = 0; i < NUM_INSERTS; i++) {
+        printf("\n\n---- INSERTING %d -----\n", inserts[i]);
+        tree->insertIndex(inserts[i]);
+        // tree->searchIndex(inserts[i], tree->root);
+        if (i < 10) {
+            tree->printTree(tree->root);
+        }
     }
 
+    free(inserts);
+
+
+
+    /*
+        printf("\n--------- INSERT %d -----------\n", random);
+        tree->insertIndex(random); 
+        // tree->searchIndex(random);
+        tree->printTree(tree->root); 
+        printf("\n\n"); 
+    */
+ 
 	// Print the random number
 
     /* //working testcase
